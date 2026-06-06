@@ -3,7 +3,7 @@ import fs from "node:fs/promises";
 import { prisma } from "@/lib/db";
 import { extractZipSafely } from "./zip";
 import { parseManifest, type Manifest } from "./manifest";
-import { ensureDir, removeDir, toolDir, TMP_DIR } from "./paths";
+import { ensureDir, removeDir, toolDir, TOOLS_DIR } from "./paths";
 
 export interface InstallResult {
   manifest: Manifest;
@@ -18,8 +18,10 @@ export interface InstallResult {
  * TODO(v2): type === "backend" ise virtualenv/npm install + spawn + healthcheck.
  */
 export async function installToolFromZip(zipBuffer: Buffer): Promise<InstallResult> {
-  await ensureDir(TMP_DIR);
-  const stagingDir = path.join(TMP_DIR, `staging-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
+  // Stage inside TOOLS_DIR so the final rename is same-filesystem (avoids EXDEV
+  // when /app/tools is a mounted volume but /app/data is the container overlay).
+  await ensureDir(TOOLS_DIR);
+  const stagingDir = path.join(TOOLS_DIR, `.staging-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
 
   try {
     const { manifestRaw } = await extractZipSafely(zipBuffer, stagingDir);
