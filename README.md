@@ -1,4 +1,4 @@
-﻿# meaprojects
+# meaprojects
 
 Kişisel, self-hosted bir AI tool yönetim paneli. Tek kullanıcılı; tool'ları zip olarak yükle, panelden çalıştır, kendi LLM anahtarlarını kullan.
 

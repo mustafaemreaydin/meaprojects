@@ -1,4 +1,4 @@
-﻿# meaprojects — Master Build Prompt
+# meaprojects — Master Build Prompt
 
 > Bu dosyayı Claude Code, Cursor veya benzeri bir AI coding aracına ver. Tek seferde tam proje iskeletini ve ilk sürümü çıkarması için tasarlandı.
 

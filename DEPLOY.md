@@ -1,4 +1,4 @@
-﻿# Deploying meaprojects.com
+# Deploying meaprojects.com
 
 This app is a Next.js 14 (App Router) panel with NextAuth (credentials), Prisma + SQLite,
 and a tool runtime that serves uploaded tools both **in-panel** and on **per-tool

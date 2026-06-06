@@ -1,4 +1,4 @@
-﻿# Bridge API — `window.meaprojects`
+# Bridge API — `window.meaprojects`
 
 Tool'lar, panel ile **`window.meaprojects`** üzerinden konuşur. Bridge, tool iframe'i yüklenirken otomatik olarak `<head>` içine enjekte edilir. Tool kodunun bu API dışında ağa erişim hakkı yoktur (iframe sandbox + `allow-same-origin` yok).
 

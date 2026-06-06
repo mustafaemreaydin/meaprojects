@@ -1,4 +1,4 @@
-﻿# HANDOFF — meaprojects.com
+# HANDOFF — meaprojects.com
 
 > **Bu proje devam ettirilmelidir.** Bu doküman, projeye senden sonra devam edecek bir
 > yazılımcı veya yapay zeka modeli için yazılmıştır. Mevcut durumu, mimariyi,

@@ -3,9 +3,9 @@ node_modules
 out
 dist
 
-# runtime data
-data
-tools
+# runtime data (root only — must NOT match components/tools or lib/tools)
+/data
+/tools
 
 # env
 .env

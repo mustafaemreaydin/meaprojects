@@ -1,4 +1,4 @@
-﻿# Hello Tool
+# Hello Tool
 
 meaprojects için minimal bir örnek tool. `window.meaprojects.llm.complete` (Anthropic) ve `window.meaprojects.storage` çağrılarını gösterir.
 

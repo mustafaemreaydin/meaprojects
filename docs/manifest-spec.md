@@ -1,4 +1,4 @@
-﻿# Tool Manifest Spec
+# Tool Manifest Spec
 
 Her meaprojects tool'u kökünde **`tool.json`** dosyası içerir. Manifest, tool'un kimliğini, tipini, giriş noktasını ve gerekli izinleri tanımlar.
 

@@ -1,4 +1,4 @@
-﻿# mea-ui — making tools look on-brand
+# mea-ui — making tools look on-brand
 
 Tools run inside a **sandboxed iframe**, so the panel's CSS does not leak into them.
 To keep everything visually consistent, the panel automatically injects a small
