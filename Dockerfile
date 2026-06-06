@@ -25,6 +25,7 @@ COPY --from=build /app/package.json ./package.json
 COPY --from=build /app/next.config.mjs ./next.config.mjs
 COPY --from=build /app/prisma ./prisma
 COPY --from=build /app/styles ./styles
+COPY --from=build /app/docs ./docs
 EXPOSE 3000
 # Apply migrations on boot, then start the server.
 CMD ["sh", "-c", "npx prisma migrate deploy && npm run start"]
