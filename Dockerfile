@@ -6,7 +6,7 @@ RUN apt-get update && apt-get install -y openssl ca-certificates && rm -rf /var/
 # --- deps (all, incl. dev — needed for build + prisma + seed) ---
 FROM base AS deps
 COPY package*.json ./
-RUN npm ci
+RUN npm install --no-audit --no-fund
 
 # --- build ---
 FROM base AS build
@@ -22,6 +22,7 @@ COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/.next ./.next
 COPY --from=build /app/public ./public
 COPY --from=build /app/package.json ./package.json
+COPY --from=build /app/next.config.mjs ./next.config.mjs
 COPY --from=build /app/prisma ./prisma
 COPY --from=build /app/styles ./styles
 EXPOSE 3000
