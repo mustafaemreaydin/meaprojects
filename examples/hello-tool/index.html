@@ -1,0 +1,138 @@
+﻿<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Hello Tool</title>
+  <style>
+    :root {
+      --bg: #f0efef;
+      --surface: #ffffff;
+      --text: #0b1323;
+      --muted: #6b7f9c;
+      --border: #e4e9f0;
+      --accent: #99b8de;
+      --accent-strong: #4670a8;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0b1323;
+        --surface: #1e2d4a;
+        --text: #f0efef;
+        --muted: #9aaac2;
+        --border: #2a3b5c;
+      }
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text);
+      font-family: -apple-system, "Segoe UI", system-ui, sans-serif; }
+    .wrap { max-width: 720px; margin: 48px auto; padding: 0 24px; }
+    h1 { font-size: 24px; font-weight: 600; margin: 0 0 4px; letter-spacing: -0.01em; }
+    p.lead { color: var(--muted); margin: 0 0 24px; font-size: 14px; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+      padding: 20px; margin-bottom: 16px; }
+    label { display: block; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em;
+      color: var(--muted); margin-bottom: 8px; font-weight: 500; }
+    textarea, input {
+      width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border);
+      background: var(--bg); color: var(--text); font-family: inherit; font-size: 14px;
+      outline: none;
+    }
+    textarea:focus, input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(153,184,222,0.35); }
+    textarea { min-height: 100px; resize: vertical; }
+    .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    button {
+      background: var(--accent); color: #0b1323; border: 0; padding: 10px 16px;
+      border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px;
+    }
+    button:hover { background: var(--accent-strong); color: #fff; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .out { white-space: pre-wrap; font-size: 14px; line-height: 1.6; }
+    .meta { color: var(--muted); font-size: 12px; margin-top: 12px; }
+    .err { color: #c25b5b; font-size: 13px; margin-top: 12px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Hello Tool</h1>
+    <p class="lead">Bu örnek <code>window.meaprojects.llm.complete</code> ve <code>window.meaprojects.storage</code> kullanır.</p>
+
+    <div class="card">
+      <label for="prompt">Soru</label>
+      <textarea id="prompt" placeholder="Claude'a ne sormak istersin?"></textarea>
+      <div class="row" style="margin-top: 12px;">
+        <button id="ask">Sor</button>
+        <button id="clear" style="background: transparent; color: var(--muted); border: 1px solid var(--border);">Belleği temizle</button>
+        <span class="meta" id="status"></span>
+      </div>
+      <div class="err" id="err" hidden></div>
+    </div>
+
+    <div class="card">
+      <label>Cevap</label>
+      <div class="out" id="answer">—</div>
+      <div class="meta" id="usage"></div>
+    </div>
+  </div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const STORAGE_KEY = "last-question";
+
+    async function init() {
+      if (!window.meaprojects) {
+        $("err").hidden = false;
+        $("err").textContent = "meaprojects bridge yüklenmedi.";
+        return;
+      }
+      try {
+        const last = await window.meaprojects.storage.get(STORAGE_KEY);
+        if (last && typeof last === "string") $("prompt").value = last;
+      } catch (e) { /* ignore */ }
+      window.meaprojects.events.emit("ready", { tool: "hello-tool" });
+    }
+
+    async function ask() {
+      const q = $("prompt").value.trim();
+      $("err").hidden = true;
+      if (!q) { $("err").hidden = false; $("err").textContent = "Önce bir soru yaz."; return; }
+
+      $("ask").disabled = true;
+      $("status").textContent = "Düşünüyor…";
+      $("answer").textContent = "—";
+      $("usage").textContent = "";
+
+      try {
+        await window.meaprojects.storage.set(STORAGE_KEY, q);
+        const out = await window.meaprojects.llm.complete({
+          provider: "anthropic",
+          model: "claude-haiku-4-5-20251001",
+          messages: [{ role: "user", content: q }],
+          maxTokens: 512,
+        });
+        $("answer").textContent = out.text;
+        $("usage").textContent = `${out.provider} · ${out.model} · in ${out.inputTokens} / out ${out.outputTokens} token`;
+        $("status").textContent = "Hazır.";
+      } catch (e) {
+        $("err").hidden = false;
+        $("err").textContent = e && e.message ? e.message : "Bilinmeyen hata.";
+        $("status").textContent = "";
+      } finally {
+        $("ask").disabled = false;
+      }
+    }
+
+    async function clearMem() {
+      try {
+        await window.meaprojects.storage.delete(STORAGE_KEY);
+        $("prompt").value = "";
+        $("status").textContent = "Bellek temizlendi.";
+      } catch (e) { /* ignore */ }
+    }
+
+    $("ask").addEventListener("click", ask);
+    $("clear").addEventListener("click", clearMem);
+    init();
+  </script>
+</body>
+</html>

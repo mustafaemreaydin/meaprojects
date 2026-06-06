@@ -1,0 +1,10 @@
+﻿{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc *)",
+      "Bash(npm run *)",
+      "PowerShell(Set-Location \"C:\\\\Users\\\\Mustafa Emre Aydın\\\\Desktop\\\\meaprojects\"; $dbPath = \"data\\\\meaprojects.db\"; if \\(Test-Path $dbPath\\) { Write-Output \"DB oluştu: $\\(\\(Get-Item $dbPath\\).Length\\) bytes\" } else { Write-Output \"Hala DB yok\" })",
+      "mcp__Claude_in_Chrome__tabs_context_mcp"
+    ]
+  }
+}

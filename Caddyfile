@@ -1,0 +1,23 @@
+# meaprojects.com — apex + wildcard tool subdomains.
+# Uses on-demand TLS so you only need plain DNS A records (no DNS-provider API).
+# Caddy asks the app before issuing a cert for any hostname (see /api/tls-check).
+
+{
+	on_demand_tls {
+		ask http://app:3000/api/tls-check
+	}
+}
+
+# Apex (and www): normal automatic HTTPS via HTTP-01.
+meaprojects.com, www.meaprojects.com {
+	reverse_proxy app:3000
+}
+
+# Every other hostname that points here (tool subdomains: slug.meaprojects.com)
+# gets a certificate on first visit, gated by the ask endpoint above.
+https:// {
+	tls {
+		on_demand
+	}
+	reverse_proxy app:3000
+}

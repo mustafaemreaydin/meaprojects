@@ -1,0 +1,29 @@
+node_modules
+.next
+out
+dist
+
+# runtime data
+data
+tools
+
+# env
+.env
+.env.local
+.env.production
+
+# logs
+*.log
+npm-debug.log*
+
+# os
+.DS_Store
+Thumbs.db
+
+# editor
+.vscode
+.idea
+
+# tsbuild
+*.tsbuildinfo
+next-env.d.ts

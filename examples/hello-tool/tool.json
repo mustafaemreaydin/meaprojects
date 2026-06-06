@@ -1,0 +1,13 @@
+﻿{
+  "name": "Hello Tool",
+  "slug": "hello-tool",
+  "version": "0.1.0",
+  "description": "meaprojects bridge API'sini gösteren küçük bir örnek. window.meaprojects.llm.complete ve storage'ı kullanır.",
+  "type": "static",
+  "entry": "index.html",
+  "permissions": [
+    "llm:anthropic",
+    "storage:local",
+    "events:emit"
+  ]
+}

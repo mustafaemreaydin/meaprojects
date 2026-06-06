@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>mea Starter</title>
+  <!--
+    No <link> to fonts/tokens needed — the panel injects the mea-ui layer:
+      • Anta Trial font
+      • design tokens: var(--bg) var(--text) var(--surface) var(--border) var(--text-muted) var(--accent) var(--radius)
+      • [data-theme] on <html>, kept in sync with the panel (light/dark)
+      • helper classes: .mea-card .mea-btn .mea-input
+    Everything below is overridable — this is just a clean on-brand starting point.
+  -->
+  <style>
+    .wrap { max-width: 640px; margin: 0 auto; padding: 48px 20px; }
+    .eyebrow { font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: var(--text-muted); }
+    h1 { font-size: clamp(28px, 5vw, 44px); font-weight: 300; letter-spacing: -.03em; margin: 10px 0 6px; }
+    p.sub { color: var(--text-muted); margin: 0 0 28px; font-weight: 300; }
+    .row { display: flex; gap: 10px; }
+    .row .mea-input { flex: 1; }
+    .out {
+      margin-top: 20px; padding: 16px; border-radius: var(--radius);
+      background: var(--bg-elevated); border: 1px solid var(--border);
+      white-space: pre-wrap; line-height: 1.6; font-size: 14px; min-height: 56px;
+      color: var(--text);
+    }
+    .muted { color: var(--text-muted); }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <p class="eyebrow">mea-ui starter</p>
+    <h1>Ask anything.</h1>
+    <p class="sub">A minimal on-brand tool. Type a prompt and it calls your LLM through the panel bridge.</p>
+
+    <div class="row">
+      <input id="q" class="mea-input" placeholder="e.g. Write a haiku about the sea" />
+      <button id="go" class="mea-btn">Run</button>
+    </div>
+
+    <div id="out" class="out muted">Response will appear here…</div>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const out = $("out");
+
+    async function run() {
+      const prompt = $("q").value.trim();
+      if (!prompt) return;
+      out.classList.remove("muted");
+      out.textContent = "Thinking…";
+      try {
+        // Bridge call — no API keys in the tool; the panel holds them.
+        const res = await window.meaprojects.llm.complete({
+          model: "anthropic/claude-3.5-haiku",  // OpenRouter slug; provider defaults to openrouter
+          messages: [{ role: "user", content: prompt }],
+          maxTokens: 1024,
+        });
+        out.textContent = res.text ?? JSON.stringify(res, null, 2);
+
+        // Example: persist the last prompt in the tool's isolated storage.
+        await window.meaprojects.storage.set("lastPrompt", prompt);
+      } catch (err) {
+        out.textContent = "Error: " + err.message;
+        window.meaprojects.ui.toast({ title: "Request failed", description: err.message, variant: "danger" });
+      }
+    }
+
+    $("go").addEventListener("click", run);
+    $("q").addEventListener("keydown", (e) => { if (e.key === "Enter") run(); });
+
+    // Greet using the context the bridge provides.
+    window.meaprojects?.storage.get("lastPrompt").then((v) => {
+      if (v) $("q").value = v;
+    });
+    console.log("mea starter ready as", window.meaprojects?.context?.user?.name, "theme:", window.meaprojects?.context?.theme);
+  </script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+{
+  "slug": "mea-starter",
+  "name": "mea Starter",
+  "version": "1.0.0",
+  "description": "On-brand starter tool — mea-ui tokens, theme sync, and an LLM call via the bridge.",
+  "type": "static",
+  "entry": "index.html",
+  "author": "Mustafa Emre Aydın",
+  "permissions": ["llm:openrouter", "storage:local"]
+}

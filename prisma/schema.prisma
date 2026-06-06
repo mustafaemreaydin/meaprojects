@@ -1,0 +1,93 @@
+// İknaLab — Prisma şeması (Master Prompt §2.2)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String?
+  role      String   @default("member") // "admin" | "member"
+  createdAt DateTime @default(now())
+  toolAccess ToolAccess[]
+}
+
+model Tool {
+  id          String        @id @default(cuid())
+  slug        String        @unique
+  name        String
+  version     String
+  description String?
+  icon        String?
+  type        String        // "static" | "spa" | "backend"
+  manifest    String        // JSON
+  permissions String        // JSON array
+  status      String        // "installed" | "disabled" | "error"
+  access      String        @default("private") // "private" | "granted" | "public"
+  installedAt DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  storages    ToolStorage[]
+  runs        ToolRun[]
+  grants      ToolAccess[]
+}
+
+model ToolAccess {
+  id        String   @id @default(cuid())
+  userId    String
+  toolId    String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tool      Tool     @relation(fields: [toolId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, toolId])
+}
+
+model ContactRequest {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  message   String
+  createdAt DateTime @default(now())
+}
+
+model ToolStorage {
+  id     String @id @default(cuid())
+  toolId String
+  key    String
+  value  String // JSON
+  tool   Tool   @relation(fields: [toolId], references: [id], onDelete: Cascade)
+
+  @@unique([toolId, key])
+}
+
+model ToolRun {
+  id        String    @id @default(cuid())
+  toolId    String
+  startedAt DateTime  @default(now())
+  endedAt   DateTime?
+  status    String    // "running" | "completed" | "error"
+  tool      Tool      @relation(fields: [toolId], references: [id], onDelete: Cascade)
+}
+
+model LlmCall {
+  id           String   @id @default(cuid())
+  toolSlug     String?
+  provider     String
+  model        String
+  inputTokens  Int
+  outputTokens Int
+  costUsd      Float?
+  createdAt    DateTime @default(now())
+}
+
+model Setting {
+  key   String @id
+  value String // şifrelenmiş JSON
+}

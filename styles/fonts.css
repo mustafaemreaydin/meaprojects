@@ -1,0 +1,17 @@
+/* Anta Trial — user-supplied, lives under public/fonts/ */
+
+@font-face {
+  font-family: "Anta Trial";
+  src: url("/fonts/AntaTrial-Light.ttf") format("truetype");
+  font-weight: 100 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Anta Trial";
+  src: url("/fonts/AntaTrial-Book.ttf") format("truetype");
+  font-weight: 400 900;
+  font-style: normal;
+  font-display: swap;
+}
