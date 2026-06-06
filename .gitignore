@@ -6,6 +6,8 @@ dist
 # runtime data (root only — must NOT match components/tools or lib/tools)
 /data
 /tools
+# SQLite DB lives here in dev — never commit it
+prisma/data/
 
 # env
 .env
