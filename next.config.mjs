@@ -16,6 +16,15 @@ const nextConfig = {
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
         ],
       },
+      {
+        // Tool iframe'leri `allow-same-origin` olmadan sandbox'landığı için
+        // opak ("null") origin alır ve enjekte edilen @font-face fontları
+        // panel origin'inden CORS ile çeker. Fontlar herkese açık statik
+        // varlıklar olduğundan `*` ile servis etmek güvenli (sandbox'ı
+        // zayıflatmadan null-origin iframe'lerin fontu yüklemesini sağlar).
+        source: "/fonts/:path*",
+        headers: [{ key: "Access-Control-Allow-Origin", value: "*" }],
+      },
     ];
   },
 };
