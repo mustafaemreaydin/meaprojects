@@ -31,7 +31,15 @@ export function buildBridgeScript(opts: BridgeBootstrapOptions): string {
   function request(channel, payload){
     return new Promise(function(resolve, reject){
       var id = nextId();
-      pending[id] = { resolve: resolve, reject: reject };
+      // Köprü kanalı kopar veya parent cevaplamazsa çağrı sonsuza dek asılı
+      // kalmasın; 120 sn sonra net bir hata ile reject et.
+      var timer = setTimeout(function(){
+        if (pending[id]) {
+          delete pending[id];
+          reject(new Error("Bridge zaman aşımı: '" + channel + "' yanıt vermedi (120 sn)."));
+        }
+      }, 120000);
+      pending[id] = { resolve: resolve, reject: reject, timer: timer };
       PARENT.postMessage({ __meaprojects__: true, kind: "request", id: id, channel: channel, payload: payload }, CTX.parentOrigin);
     });
   }
@@ -47,13 +55,23 @@ export function buildBridgeScript(opts: BridgeBootstrapOptions): string {
     document.addEventListener("DOMContentLoaded", function(){ applyTheme(CTX.theme); });
   }
 
+  function sendReady(){
+    PARENT.postMessage({ __meaprojects__: true, kind: "ready", toolSlug: CTX.toolSlug }, CTX.parentOrigin);
+  }
+
   window.addEventListener("message", function(e){
     if (!e.data || e.data.__meaprojects__ !== true) return;
     if (e.origin !== CTX.parentOrigin) return;
     var msg = e.data;
+    if (msg.kind === "host-ready") {
+      // Parent listener'i baglandi; ilk ready kacmis olabilir, tekrar yolla.
+      sendReady();
+      return;
+    }
     if (msg.kind === "response" && pending[msg.id]) {
       var h = pending[msg.id];
       delete pending[msg.id];
+      if (h.timer) clearTimeout(h.timer);
       if (msg.ok) h.resolve(msg.result);
       else h.reject(new Error(msg.error || "Bridge hatası"));
     } else if (msg.kind === "event") {
@@ -113,8 +131,10 @@ export function buildBridgeScript(opts: BridgeBootstrapOptions): string {
     }
   };
 
-  // Bridge hazır olduğunda parent'a bildir.
-  PARENT.postMessage({ __meaprojects__: true, kind: "ready", toolSlug: CTX.toolSlug }, CTX.parentOrigin);
+  // Bridge hazir oldugunda parent'a bildir. Parent listener'i henuz bagli
+  // degilse bu kacabilir; parent mount olunca host-ready yollar, biz de
+  // yukaridaki handler'da ready'yi tekrar gondeririz (iki yonlu el sikisma).
+  sendReady();
 })();`;
 }
 

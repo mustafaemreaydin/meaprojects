@@ -38,9 +38,12 @@ export function BridgeRelay({ iframeRef, toolSlug, onReady }: BridgeRelayProps) 
 
   const postTheme = React.useCallback(
     (theme: string) => {
+      // İframe `allow-same-origin` olmadan sandbox'landığı için origin'i opak
+      // ("null"); panel origin'i ile hedeflenemez. Hedef pencere zaten yalnızca
+      // bizim iframe contentWindow'umuz olduğundan "*" güvenli.
       iframeRef.current?.contentWindow?.postMessage(
         { __meaprojects__: true, kind: "event", name: "theme", payload: { theme } },
-        window.location.origin
+        "*"
       );
     },
     [iframeRef]
@@ -51,12 +54,27 @@ export function BridgeRelay({ iframeRef, toolSlug, onReady }: BridgeRelayProps) 
     if (readyRef.current && resolvedTheme) postTheme(resolvedTheme);
   }, [resolvedTheme, postTheme]);
 
+  // İframe `ready`'yi, relay listener bağlanmadan önce gönderebilir (yarış);
+  // o durumda tek seferlik `ready` kaçar ve "bağlanıyor…" hiç temizlenmez.
+  // Relay tarafında iframe'e `host-ready` göndererek el sıkışmayı tetikliyoruz:
+  // iframe bunu alınca `ready`'yi tekrar yayınlar (bkz. inject.ts).
+  const pingHostReady = React.useCallback(() => {
+    iframeRef.current?.contentWindow?.postMessage(
+      { __meaprojects__: true, kind: "host-ready" },
+      "*"
+    );
+  }, [iframeRef]);
+
   React.useEffect(() => {
     const handler = async (e: MessageEvent) => {
       const data = e.data as BridgeMessage | null;
       if (!data || data.__meaprojects__ !== true) return;
+      // Güvenlik sınırı: mesaj gerçekten bizim iframe'imizden mi geliyor?
+      // İframe `allow-same-origin` olmadan sandbox'landığı için origin'i opak
+      // ("null") gelir — panel origin'i ile eşleşmez. Bu yüzden origin eşitliği
+      // yerine source (contentWindow) kimliğine güveniyoruz.
       if (e.source !== iframeRef.current?.contentWindow) return;
-      if (e.origin !== window.location.origin) return;
+      if (e.origin !== window.location.origin && e.origin !== "null") return;
 
       if (data.kind === "ready") {
         readyRef.current = true;
@@ -87,9 +105,11 @@ export function BridgeRelay({ iframeRef, toolSlug, onReady }: BridgeRelayProps) 
 
       if (data.kind === "request") {
         const reply = (ok: boolean, result: unknown, error?: string) => {
+          // Opak origin'li sandbox iframe'e cevap; targetOrigin "*" zorunlu
+          // (panel origin'i ile teslim edilemez). Hedef yine contentWindow.
           iframeRef.current?.contentWindow?.postMessage(
             { __meaprojects__: true, kind: "response", id: data.id, ok, result, error },
-            window.location.origin
+            "*"
           );
         };
         try {
@@ -102,8 +122,13 @@ export function BridgeRelay({ iframeRef, toolSlug, onReady }: BridgeRelayProps) 
     };
 
     window.addEventListener("message", handler);
+    // Listener artık bağlı; iframe bizden önce yüklenip `ready`'yi kaçırmış
+    // olabilir. `host-ready` ile el sıkışmayı tetikle (iframe `ready`'yi
+    // yeniden yollar). İframe henüz yüklenmediyse bu mesaj kaybolur ama o
+    // durumda iframe kendi `ready`'sini biz dinlerken gönderecektir.
+    pingHostReady();
     return () => window.removeEventListener("message", handler);
-  }, [iframeRef, toolSlug, onReady, resolvedTheme, postTheme]);
+  }, [iframeRef, toolSlug, onReady, resolvedTheme, postTheme, pingHostReady]);
 
   return null;
 }
