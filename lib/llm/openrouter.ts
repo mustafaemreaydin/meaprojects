@@ -8,6 +8,8 @@ function client(apiKey: string) {
   return new OpenAI({
     apiKey,
     baseURL: BASE_URL,
+    timeout: 60_000, // fail with a clear error instead of hanging
+    maxRetries: 1,
     defaultHeaders: {
       "HTTP-Referer": process.env.NEXTAUTH_URL ?? "https://meaprojects.com",
       "X-Title": "meaprojects.com",

@@ -1,9 +1,6 @@
 import { prisma } from "@/lib/db";
 import { decryptString } from "@/lib/crypto";
 import { openrouterAdapter } from "./openrouter";
-import { anthropicAdapter } from "./anthropic";
-import { openaiAdapter } from "./openai";
-import { googleAdapter } from "./google";
 import type {
   LlmAdapter,
   LlmCompleteRequest,
@@ -13,11 +10,9 @@ import type {
 
 export type { LlmProvider, LlmMessage, LlmCompleteRequest, LlmCompleteResponse } from "./types";
 
+// OpenRouter is the single gateway — one key, every model.
 const ADAPTERS: Record<LlmProvider, LlmAdapter> = {
-  openrouter: openrouterAdapter, // primary: single key, all models
-  anthropic: anthropicAdapter,
-  openai: openaiAdapter,
-  google: googleAdapter,
+  openrouter: openrouterAdapter,
 };
 
 export function getAdapter(provider: LlmProvider): LlmAdapter {

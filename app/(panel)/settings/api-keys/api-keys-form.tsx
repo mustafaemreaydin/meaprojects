@@ -12,7 +12,7 @@ import { formatRelativeTime } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 
 export interface ProviderInfo {
-  id: "openrouter" | "anthropic" | "openai" | "google";
+  id: "openrouter";
   label: string;
   placeholder: string;
   available: boolean;

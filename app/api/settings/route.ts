@@ -5,7 +5,7 @@ import { requireAdmin } from "@/lib/access";
 import { encryptString } from "@/lib/crypto";
 import { settingKeyFor } from "@/lib/llm";
 
-const ProviderSchema = z.enum(["openrouter", "anthropic", "openai", "google"]);
+const ProviderSchema = z.enum(["openrouter"]);
 
 const PostBody = z.object({
   provider: ProviderSchema,
@@ -29,13 +29,6 @@ export async function POST(req: Request) {
   const trimmed = apiKey.trim();
   if (!trimmed) {
     return NextResponse.json({ error: "Anahtar boş olamaz." }, { status: 400 });
-  }
-
-  if (provider === "google") {
-    return NextResponse.json(
-      { error: "Google sağlayıcısı v2'de etkinleşecek." },
-      { status: 400 }
-    );
   }
 
   const encrypted = encryptString(trimmed);

@@ -11,28 +11,7 @@ const PROVIDERS: { id: LlmProvider; label: string; placeholder: string; availabl
     label: "OpenRouter",
     placeholder: "sk-or-...",
     available: true,
-    note: "Recommended — one key, every model. Tools call any model slug (e.g. anthropic/claude-3.5-haiku).",
-  },
-  {
-    id: "anthropic",
-    label: "Anthropic (direct)",
-    placeholder: "sk-ant-...",
-    available: true,
-    note: "Optional — only if you want to call Anthropic directly instead of via OpenRouter.",
-  },
-  {
-    id: "openai",
-    label: "OpenAI (direct)",
-    placeholder: "sk-...",
-    available: true,
-    note: "Optional — direct OpenAI access instead of via OpenRouter.",
-  },
-  {
-    id: "google",
-    label: "Google",
-    placeholder: "AIza...",
-    available: false,
-    note: "Use OpenRouter for Google models. Direct integration coming in v2.",
+    note: "One key, every model. Tools call any model slug (e.g. google/gemini-flash-1.5, anthropic/claude-3.5-haiku).",
   },
 ];
 

@@ -1,4 +1,4 @@
-export type LlmProvider = "openrouter" | "anthropic" | "openai" | "google";
+export type LlmProvider = "openrouter";
 
 export interface LlmMessage {
   role: "system" | "user" | "assistant";

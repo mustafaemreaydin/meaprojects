@@ -5,9 +5,6 @@ export type Permission = string;
 
 export const KNOWN_PERMISSIONS = [
   "llm:openrouter",
-  "llm:anthropic",
-  "llm:openai",
-  "llm:google",
   "storage:local",
   "events:emit",
   "events:listen",
@@ -24,21 +21,6 @@ const REGISTRY: Record<string, PermissionInfo> = {
     id: "llm:openrouter",
     label: "LLM — OpenRouter",
     description: "Tool, OpenRouter üzerinden tüm modellere (tek cüzdan) panel aracılığıyla çağrı yapabilir.",
-  },
-  "llm:anthropic": {
-    id: "llm:anthropic",
-    label: "LLM — Anthropic",
-    description: "Tool, Anthropic modellerine panel üzerinden çağrı yapabilir.",
-  },
-  "llm:openai": {
-    id: "llm:openai",
-    label: "LLM — OpenAI",
-    description: "Tool, OpenAI modellerine panel üzerinden çağrı yapabilir.",
-  },
-  "llm:google": {
-    id: "llm:google",
-    label: "LLM — Google",
-    description: "Tool, Google modellerine panel üzerinden çağrı yapabilir. (v2)",
   },
   "storage:local": {
     id: "storage:local",

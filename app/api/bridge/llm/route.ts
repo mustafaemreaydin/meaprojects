@@ -4,8 +4,8 @@ import { requireToolAccess } from "@/lib/access";
 import { handleLlmComplete } from "@/lib/bridge/handlers";
 
 const BodySchema = z.object({
-  // Defaults to OpenRouter — the single gateway to every model.
-  provider: z.enum(["openrouter", "anthropic", "openai", "google"]).default("openrouter"),
+  // OpenRouter is the only gateway; `provider` (if a tool sends it) is ignored.
+  provider: z.string().optional(),
   model: z.string().min(1),
   messages: z
     .array(
@@ -42,7 +42,9 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const result = await handleLlmComplete(slug, parsed.data);
+    // Always route through OpenRouter regardless of what the tool passed.
+    const { provider: _ignored, ...rest } = parsed.data;
+    const result = await handleLlmComplete(slug, { ...rest, provider: "openrouter" });
     return NextResponse.json(result);
   } catch (err) {
     return NextResponse.json({ error: (err as Error).message }, { status: 400 });

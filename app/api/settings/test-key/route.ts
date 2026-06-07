@@ -4,7 +4,7 @@ import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/access";
 import { getAdapter, getApiKey } from "@/lib/llm";
 
-const ProviderSchema = z.enum(["openrouter", "anthropic", "openai", "google"]);
+const ProviderSchema = z.enum(["openrouter"]);
 const Body = z.object({ provider: ProviderSchema });
 
 function metaKeyFor(provider: z.infer<typeof ProviderSchema>): string {
@@ -21,13 +21,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Geçersiz istek." }, { status: 400 });
   }
   const { provider } = parsed.data;
-
-  if (provider === "google") {
-    return NextResponse.json(
-      { ok: false, error: "Google sağlayıcısı v2'de etkinleşecek." },
-      { status: 400 }
-    );
-  }
 
   const apiKey = await getApiKey(provider);
   if (!apiKey) {

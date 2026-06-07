@@ -139,15 +139,15 @@ You may fully override these with your own CSS — nothing uses `!important`.
 
 | Permission | Needed for |
 |---|---|
-| `llm:openrouter` | `llm.complete(...)` (default — any model via OpenRouter) |
-| `llm:anthropic` | only if calling Anthropic directly (`provider: "anthropic"`) |
-| `llm:openai` | only if calling OpenAI directly (`provider: "openai"`) |
-| `llm:google` | Google direct (v2, not active — use OpenRouter instead) |
+| `llm:openrouter` | `llm.complete(...)` — any model via OpenRouter (the only LLM gateway) |
 | `storage:local` | any `storage.*` call |
 | `events:emit` | `events.emit` |
 | `events:listen` | `events.on` |
 
-Almost always you want just **`llm:openrouter`** (+ `storage:local` if you persist data).
+LLM access is **OpenRouter-only**. Almost always you want just **`llm:openrouter`**
+(+ `storage:local` if you persist data). Use OpenRouter model slugs like
+`google/gemini-flash-1.5`, `anthropic/claude-3.5-haiku`, `openai/gpt-4o-mini`.
+Old permissions `llm:anthropic` / `llm:openai` / `llm:google` no longer exist — do not use them.
 
 Declaring a permission you don't use is harmless but unnecessary. Calling an API without its
 permission throws.
