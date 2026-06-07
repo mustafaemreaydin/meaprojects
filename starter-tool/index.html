@@ -54,7 +54,7 @@
       try {
         // Bridge call — no API keys in the tool; the panel holds them.
         const res = await window.meaprojects.llm.complete({
-          model: "anthropic/claude-3.5-haiku",  // OpenRouter slug; provider defaults to openrouter
+          model: "google/gemini-2.5-flash",  // OpenRouter slug; provider defaults to openrouter
           messages: [{ role: "user", content: prompt }],
           maxTokens: 1024,
         });

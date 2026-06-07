@@ -60,7 +60,7 @@ window.meaprojects.context
 // the API key & enforces your declared permission. `provider` is optional and
 // defaults to "openrouter".
 const res = await window.meaprojects.llm.complete({
-  model: "anthropic/claude-3.5-haiku",   // OpenRouter model slug (see notes below)
+  model: "google/gemini-2.5-flash",      // OpenRouter model slug (see notes below)
   messages: [{ role: "user", content: "Hello" }],  // roles: system|user|assistant
   maxTokens: 1024,                       // optional
   temperature: 0.7,                      // optional
@@ -86,11 +86,11 @@ window.meaprojects.ui.toast({ title: "Done", description: "…", variant: "succe
 const ok = await window.meaprojects.ui.confirm({ title: "Sure?", message: "…" }); // → boolean
 ```
 
-**Model notes:** use an **OpenRouter model slug** — `<vendor>/<model>`, e.g.
-`anthropic/claude-3.5-haiku`, `anthropic/claude-3.5-sonnet`, `openai/gpt-4o-mini`,
-`openai/gpt-4o`, `google/gemini-flash-1.5`, `meta-llama/llama-3.1-70b-instruct`.
-One OpenRouter key (set by admin under Settings → API Keys) unlocks all of them. If unsure,
-default to a small/fast model like `anthropic/claude-3.5-haiku`.
+**Model notes:** use a **current OpenRouter model slug** — `<vendor>/<model>`. Model IDs
+change over time, so **verify the exact ID at https://openrouter.ai/models**. Good
+fast/cheap defaults: `google/gemini-2.5-flash`, `google/gemini-2.5-flash-lite`,
+`openai/gpt-4o-mini`. One OpenRouter key (set by admin under Settings → API Keys) unlocks
+all of them. (Old IDs like `google/gemini-flash-1.5` are deprecated — don't use them.)
 
 **Errors:** bridge calls reject with an `Error` (e.g. missing permission, no API key, rate
 limit). Wrap in try/catch and surface failures via `ui.toast({ variant: "danger" })`.
@@ -204,7 +204,7 @@ permission throws.
       out.textContent = "Writing…";
       try {
         const res = await window.meaprojects.llm.complete({
-          model: "anthropic/claude-3.5-haiku",  // OpenRouter slug; provider defaults to openrouter
+          model: "google/gemini-2.5-flash",  // OpenRouter slug; provider defaults to openrouter
           messages: [{ role: "user", content: "Write a haiku about: " + topic }],
           maxTokens: 200,
         });
