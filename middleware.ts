@@ -51,7 +51,7 @@ export async function middleware(req: NextRequest) {
       return NextResponse.redirect(`${apexBase}/login?callbackUrl=${encodeURIComponent(callback)}`);
     }
     const rw = url.clone();
-    rw.pathname = `/_tool/${sub}`;
+    rw.pathname = `/t/${sub}`;
     rw.search = "";
     return NextResponse.rewrite(rw);
   }

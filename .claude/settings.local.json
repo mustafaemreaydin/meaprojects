@@ -4,7 +4,10 @@
       "Bash(npx tsc *)",
       "Bash(npm run *)",
       "PowerShell(Set-Location \"C:\\\\Users\\\\Mustafa Emre Aydın\\\\Desktop\\\\meaprojects\"; $dbPath = \"data\\\\meaprojects.db\"; if \\(Test-Path $dbPath\\) { Write-Output \"DB oluştu: $\\(\\(Get-Item $dbPath\\).Length\\) bytes\" } else { Write-Output \"Hala DB yok\" })",
-      "mcp__Claude_in_Chrome__tabs_context_mcp"
+      "mcp__Claude_in_Chrome__tabs_context_mcp",
+      "Bash(Select-String -Path \"C:\\\\Users\\\\Mustafa Emre Aydın\\\\Desktop\\\\iknalab\\\\.env\" -Pattern \"COOKIE_DOMAIN\" -Quiet)",
+      "Bash(mkdir -p \"app/\\(subtool\\)/t\")",
+      "Bash(cp \"app/\\(subtool\\)/_tool/[slug]/page.tsx\" \"app/\\(subtool\\)/t/\")"
     ]
   }
 }

@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 /**
  * Rendered when a request arrives on a tool subdomain (e.g. slug.meaprojects.com).
- * The middleware rewrites such requests to /_tool/<slug>. Access is enforced here.
+ * The middleware rewrites such requests to /t/<slug>. Access is enforced here.
  */
 export default async function SubtoolPage({ params }: { params: { slug: string } }) {
   const user = await getCurrentUser();
