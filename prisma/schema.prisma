@@ -36,6 +36,7 @@ model Tool {
   storages    ToolStorage[]
   runs        ToolRun[]
   grants      ToolAccess[]
+  jobs        ToolJob[]
 }
 
 model ToolAccess {
@@ -90,4 +91,43 @@ model LlmCall {
 model Setting {
   key   String @id
   value String // şifrelenmiş JSON
+}
+
+model ToolJob {
+  id         String       @id @default(cuid())
+  toolId     String
+  toolSlug   String
+  name       String
+  type       String       // "cron" | "once" | "webhook"
+  schedule   String?      // cron expr ("*/5 * * * *") or ISO date for "once"
+  code       String
+  status     String       @default("active") // "active" | "paused" | "cancelled"
+  lastRunAt  DateTime?
+  nextRunAt  DateTime?
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  tool       Tool         @relation(fields: [toolId], references: [id], onDelete: Cascade)
+  runs       ToolJobRun[]
+
+  @@unique([toolId, name])
+}
+
+model ToolJobRun {
+  id        String    @id @default(cuid())
+  jobId     String
+  startedAt DateTime  @default(now())
+  endedAt   DateTime?
+  status    String    // "running" | "success" | "error"
+  output    String?
+  error     String?
+  job       ToolJob   @relation(fields: [jobId], references: [id], onDelete: Cascade)
+}
+
+model ToolNotification {
+  id        String   @id @default(cuid())
+  toolSlug  String
+  message   String
+  data      String?  // JSON
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
 }

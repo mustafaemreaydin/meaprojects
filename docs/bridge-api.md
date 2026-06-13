@@ -119,6 +119,75 @@ Olası hata kategorileri:
 - **`provider_error`** — OpenRouter'dan gelen hata (mesaj iletilir).
 - **`invalid_request`** — şema doğrulaması başarısız.
 
+## Background jobs (`meaprojects.jobs`)
+
+İzin: `jobs:write` (manifest'te beyan edilmeli).
+
+```js
+// Periyodik görev — her 10 dakikada bir
+await window.meaprojects.jobs.register("fiyat-kontrol", {
+  type: "cron",
+  schedule: "*/10 * * * *",   // standart cron ifadesi
+  code: `
+    const res = await meaprojects.llm.complete({
+      model: "google/gemini-2.5-flash",
+      messages: [{ role: "user", content: "Bitcoin fiyatı ne?" }],
+    });
+    await meaprojects.storage.set("son-fiyat", res.text);
+    await meaprojects.notify("Fiyat güncellendi", { text: res.text });
+  `,
+});
+
+// Tek seferlik — 1 saat sonra çalışsın
+await window.meaprojects.jobs.register("hatirlatici", {
+  type: "once",
+  schedule: new Date(Date.now() + 3_600_000).toISOString(),
+  code: `await meaprojects.notify("1 saat geçti!");`,
+});
+
+// Webhook — dışarıdan POST ile tetiklenir
+await window.meaprojects.jobs.register("siparis-geldi", {
+  type: "webhook",
+  code: `
+    const payload = await meaprojects.storage.get("__webhook__siparis-geldi__payload");
+    await meaprojects.notify("Yeni sipariş!", JSON.parse(payload));
+  `,
+});
+// Tetikleme URL'i: POST /api/tools/{slug}/webhook/siparis-geldi
+// GET ile de çalışır (basit URL trigger için)
+
+// Yönetim
+const jobs = await window.meaprojects.jobs.list();
+await window.meaprojects.jobs.pause("fiyat-kontrol");
+await window.meaprojects.jobs.resume("fiyat-kontrol");
+await window.meaprojects.jobs.cancel("fiyat-kontrol");
+```
+
+**Job context** — job code'u server-side Node.js'te çalışır. Erişilebilir:
+- `meaprojects.llm.complete(...)` — LLM çağrısı
+- `meaprojects.storage.*` — aynı tool storage'ı
+- `meaprojects.notify(message, data?)` — UI'a bildirim gönder
+- `console.log/error` — çalışma loglarına yazar
+- `fetch(...)` — harici HTTP istekleri
+
+**Bildirim alma (UI tarafında):**
+```js
+// Tool açıkken bildirimleri dinle
+const stop = window.meaprojects.notifications.connect((notification) => {
+  console.log(notification.message, notification.data);
+}, 3000); // her 3 sn polling
+
+// Temizlik
+stop();
+
+// Manuel sorgulama
+const msgs = await window.meaprojects.notifications.poll();
+```
+
+Panel → **Jobs** menüsünden tüm job'ları görüntüleyip durdurabilirsin.
+
+---
+
 ## Panel konsola erişim zordur — hata banner'ı ekle
 
 Panel içindeki iframe konsoluna doğrudan erişilemez. Debug için tool'a görünür bir hata banner'ı koy:

@@ -7,7 +7,8 @@
       "mcp__Claude_in_Chrome__tabs_context_mcp",
       "Bash(Select-String -Path \"C:\\\\Users\\\\Mustafa Emre Aydın\\\\Desktop\\\\iknalab\\\\.env\" -Pattern \"COOKIE_DOMAIN\" -Quiet)",
       "Bash(mkdir -p \"app/\\(subtool\\)/t\")",
-      "Bash(cp \"app/\\(subtool\\)/_tool/[slug]/page.tsx\" \"app/\\(subtool\\)/t/\")"
+      "Bash(cp \"app/\\(subtool\\)/_tool/[slug]/page.tsx\" \"app/\\(subtool\\)/t/\")",
+      "Bash(npx prisma *)"
     ]
   }
 }

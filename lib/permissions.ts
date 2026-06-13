@@ -8,6 +8,7 @@ export const KNOWN_PERMISSIONS = [
   "storage:local",
   "events:emit",
   "events:listen",
+  "jobs:write",
 ] as const;
 
 export interface PermissionInfo {

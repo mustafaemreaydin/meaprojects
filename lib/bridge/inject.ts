@@ -147,6 +147,31 @@ export function buildBridgeScript(opts: BridgeBootstrapOptions): string {
         PARENT.postMessage({ __meaprojects__: true, kind: "ui.toast", payload: args }, CTX.parentOrigin);
       },
       confirm: function(args){ return request("ui.confirm", args); }
+    },
+    jobs: {
+      register: function(name, opts){ return request("jobs.register", Object.assign({ name: name }, opts)); },
+      cancel:   function(name){ return request("jobs.cancel",   { name: name }); },
+      pause:    function(name){ return request("jobs.pause",    { name: name }); },
+      resume:   function(name){ return request("jobs.resume",   { name: name }); },
+      list:     function(){     return request("jobs.list",     {}); }
+    },
+    notifications: {
+      poll: function(since){ return request("notifications.poll", { since: since || null }); },
+      connect: function(callback, intervalMs){
+        var ms = intervalMs || 3000;
+        var lastSince = new Date().toISOString();
+        var active = true;
+        var tick = function(){
+          if (!active) return;
+          window.meaprojects.notifications.poll(lastSince).then(function(msgs){
+            lastSince = new Date().toISOString();
+            if (Array.isArray(msgs)) msgs.forEach(callback);
+          }).catch(function(){});
+          if (active) setTimeout(tick, ms);
+        };
+        setTimeout(tick, ms);
+        return function(){ active = false; };
+      }
     }
   };
 

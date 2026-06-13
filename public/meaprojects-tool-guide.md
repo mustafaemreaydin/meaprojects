@@ -200,8 +200,9 @@ You may fully override these with your own CSS — nothing uses `!important`.
 
 | Permission | Needed for |
 |---|---|
-| `llm:openrouter` | `llm.complete(...)` — any model via OpenRouter (the only LLM gateway) |
+| `llm:openrouter` | `llm.complete(...)` / `llm.stream(...)` — any model via OpenRouter |
 | `storage:local` | any `storage.*` call |
+| `jobs:write` | `jobs.register/cancel/pause/resume/list` + `notifications.*` |
 | `events:emit` | `events.emit` |
 | `events:listen` | `events.on` |
 

@@ -196,6 +196,27 @@ async function handleStreamRequest(
 }
 
 async function routeBridgeRequest(toolSlug: string, channel: string, payload: unknown): Promise<unknown> {
+  if (channel.startsWith("jobs.")) {
+    const op = channel.split(".")[1];
+    const res = await fetch("/api/bridge/jobs", {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-meaprojects-tool": toolSlug },
+      body: JSON.stringify({ op, ...(payload as object) }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data?.error ?? "Job hatası");
+    return data;
+  }
+  if (channel === "notifications.poll") {
+    const res = await fetch("/api/bridge/notifications", {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-meaprojects-tool": toolSlug },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data?.error ?? "Bildirim hatası");
+    return data;
+  }
   if (channel === "llm.complete") {
     const res = await fetch("/api/bridge/llm", {
       method: "POST",

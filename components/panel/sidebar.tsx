@@ -14,6 +14,7 @@ import {
   Users,
   Inbox,
   LogOut,
+  Timer,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -33,6 +34,7 @@ const NAV: NavItem[] = [
   { href: "/tools", label: "Tools", icon: Boxes, match: (p) => p.startsWith("/tools"), adminOnly: true },
   { href: "/admin/users", label: "Users", icon: Users, adminOnly: true },
   { href: "/admin/requests", label: "Requests", icon: Inbox, adminOnly: true },
+  { href: "/jobs", label: "Jobs", icon: Timer, match: (p) => p.startsWith("/jobs"), adminOnly: true },
   { href: "/logs", label: "Logs", icon: ScrollText, adminOnly: true },
   { href: "/settings", label: "Settings", icon: Settings, match: (p) => p.startsWith("/settings"), adminOnly: true },
   { href: "/docs", label: "Docs", icon: BookOpen, adminOnly: true },
