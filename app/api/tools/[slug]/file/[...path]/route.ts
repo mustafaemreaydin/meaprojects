@@ -58,15 +58,19 @@ export async function GET(
       req.headers.get("x-forwarded-proto") ??
       (host.startsWith("localhost") || host.includes("127.0.0.1") ? "http" : "https");
     const parentOrigin = `${proto}://${host}`;
+    const themeCookie = req.cookies.get("theme")?.value;
+    const theme: "light" | "dark" = themeCookie === "dark" ? "dark" : "light";
+    const manifestJson = safeJson<{ ui?: string }>(tool.manifest);
     const opts: BridgeBootstrapOptions = {
       toolSlug: tool.slug,
       parentOrigin,
-      theme: "light",
-      locale: "en",
+      theme,
+      locale: "tr",
       user: {
         id: user.id,
         name: user.name ?? "You",
       },
+      ui: manifestJson?.ui === "mea",
     };
     const patched = injectBridgeIntoHtml(html, opts);
     return new NextResponse(patched, {
@@ -75,6 +79,10 @@ export async function GET(
   }
 
   return new NextResponse(new Uint8Array(buf), { headers: { "content-type": type } });
+}
+
+function safeJson<T>(s: string): T | null {
+  try { return JSON.parse(s) as T; } catch { return null; }
 }
 
 const MIME: Record<string, string> = {

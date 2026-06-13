@@ -29,6 +29,8 @@ export const ManifestSchema = z
     backend: BackendManifestSchema.optional(),
     category: z.string().optional(),
     tags: z.array(z.string()).optional(),
+    /** Opt-in: "mea" → panel injects design tokens + keeps data-theme in sync */
+    ui: z.enum(["mea"]).optional(),
   })
   .superRefine((data, ctx) => {
     if (data.type === "backend" && !data.backend) {

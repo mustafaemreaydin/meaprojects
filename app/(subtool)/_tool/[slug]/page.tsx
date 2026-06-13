@@ -43,6 +43,7 @@ export default async function SubtoolPage({ params }: { params: { slug: string }
       entry={entry}
       userName={user.name ?? "You"}
       userId={user.id}
+      standalone
     />
   );
 }

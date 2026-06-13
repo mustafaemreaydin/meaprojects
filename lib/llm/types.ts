@@ -25,5 +25,10 @@ export interface LlmCompleteResponse {
 
 export interface LlmAdapter {
   complete(req: LlmCompleteRequest, apiKey: string): Promise<LlmCompleteResponse>;
+  stream(
+    req: LlmCompleteRequest,
+    apiKey: string,
+    onChunk: (text: string) => void
+  ): Promise<LlmCompleteResponse>;
   testKey(apiKey: string): Promise<{ ok: true } | { ok: false; error: string }>;
 }

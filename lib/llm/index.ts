@@ -44,3 +44,16 @@ export async function llmComplete(req: LlmCompleteRequest): Promise<LlmCompleteR
   }
   return getAdapter(req.provider).complete(req, key);
 }
+
+export async function llmStream(
+  req: LlmCompleteRequest,
+  onChunk: (text: string) => void
+): Promise<LlmCompleteResponse> {
+  const key = await getApiKey(req.provider);
+  if (!key) {
+    throw new Error(
+      `'${req.provider}' için API anahtarı tanımlı değil. Ayarlar → API Keys'e ekle.`
+    );
+  }
+  return getAdapter(req.provider).stream(req, key, onChunk);
+}

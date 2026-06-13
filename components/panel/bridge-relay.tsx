@@ -105,18 +105,21 @@ export function BridgeRelay({ iframeRef, toolSlug, onReady }: BridgeRelayProps) 
 
       if (data.kind === "request") {
         const reply = (ok: boolean, result: unknown, error?: string) => {
-          // Opak origin'li sandbox iframe'e cevap; targetOrigin "*" zorunlu
-          // (panel origin'i ile teslim edilemez). Hedef yine contentWindow.
           iframeRef.current?.contentWindow?.postMessage(
             { __meaprojects__: true, kind: "response", id: data.id, ok, result, error },
             "*"
           );
         };
-        try {
-          const result = await routeBridgeRequest(toolSlug, data.channel ?? "", data.payload);
-          reply(true, result);
-        } catch (err) {
-          reply(false, undefined, (err as Error).message);
+
+        if (data.channel === "llm.stream") {
+          handleStreamRequest(toolSlug, data.id ?? "", data.payload, iframeRef, reply);
+        } else {
+          try {
+            const result = await routeBridgeRequest(toolSlug, data.channel ?? "", data.payload);
+            reply(true, result);
+          } catch (err) {
+            reply(false, undefined, (err as Error).message);
+          }
         }
       }
     };
@@ -131,6 +134,65 @@ export function BridgeRelay({ iframeRef, toolSlug, onReady }: BridgeRelayProps) 
   }, [iframeRef, toolSlug, onReady, resolvedTheme, postTheme, pingHostReady]);
 
   return null;
+}
+
+async function handleStreamRequest(
+  toolSlug: string,
+  requestId: string,
+  payload: unknown,
+  iframeRef: React.RefObject<HTMLIFrameElement>,
+  reply: (ok: boolean, result: unknown, error?: string) => void
+): Promise<void> {
+  const sendChunk = (chunk: string) => {
+    iframeRef.current?.contentWindow?.postMessage(
+      { __meaprojects__: true, kind: "stream-chunk", id: requestId, chunk },
+      "*"
+    );
+  };
+
+  try {
+    const res = await fetch("/api/bridge/llm", {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-meaprojects-tool": toolSlug },
+      body: JSON.stringify({ ...(payload as object), stream: true }),
+    });
+
+    if (!res.ok || !res.body) {
+      const data = await res.json().catch(() => ({})) as { error?: string };
+      reply(false, undefined, data.error ?? "LLM streaming hatası");
+      return;
+    }
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() ?? "";
+
+      for (const line of lines) {
+        if (!line.startsWith("data: ")) continue;
+        const raw = line.slice(6).trim();
+        if (!raw) continue;
+        try {
+          const msg = JSON.parse(raw) as { type: string; chunk?: string; error?: string } & Record<string, unknown>;
+          if (msg.type === "chunk" && msg.chunk) {
+            sendChunk(msg.chunk);
+          } else if (msg.type === "done") {
+            reply(true, msg);
+          } else if (msg.type === "error") {
+            reply(false, undefined, msg.error ?? "Stream hatası");
+          }
+        } catch { /* malformed SSE line — skip */ }
+      }
+    }
+  } catch (err) {
+    reply(false, undefined, (err as Error).message);
+  }
 }
 
 async function routeBridgeRequest(toolSlug: string, channel: string, payload: unknown): Promise<unknown> {

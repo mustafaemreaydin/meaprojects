@@ -14,6 +14,10 @@ export interface BridgeBootstrapOptions {
   theme: "light" | "dark";
   locale: string;
   user: { id: string; name: string };
+  /** Opt-in (manifest `"ui": "mea"`): inject the mea-ui design layer + theme sync.
+   *  When false/omitted the panel injects ONLY the bridge and never touches the
+   *  tool's markup, styles, or <html data-theme> — the tool's design is left alone. */
+  ui?: boolean;
 }
 
 export function buildBridgeScript(opts: BridgeBootstrapOptions): string {
@@ -31,8 +35,6 @@ export function buildBridgeScript(opts: BridgeBootstrapOptions): string {
   function request(channel, payload){
     return new Promise(function(resolve, reject){
       var id = nextId();
-      // Köprü kanalı kopar veya parent cevaplamazsa çağrı sonsuza dek asılı
-      // kalmasın; 120 sn sonra net bir hata ile reject et.
       var timer = setTimeout(function(){
         if (pending[id]) {
           delete pending[id];
@@ -44,15 +46,32 @@ export function buildBridgeScript(opts: BridgeBootstrapOptions): string {
     });
   }
 
+  function streamRequest(channel, payload, onChunk){
+    return new Promise(function(resolve, reject){
+      var id = nextId();
+      var timer = setTimeout(function(){
+        if (pending[id]) {
+          delete pending[id];
+          reject(new Error("Bridge zaman aşımı: '" + channel + "' yanıt vermedi (120 sn)."));
+        }
+      }, 120000);
+      pending[id] = { resolve: resolve, reject: reject, timer: timer, onChunk: onChunk || null };
+      PARENT.postMessage({ __meaprojects__: true, kind: "request", id: id, channel: channel, payload: payload }, CTX.parentOrigin);
+    });
+  }
+
   function applyTheme(theme){
     try {
       document.documentElement.setAttribute("data-theme", theme === "dark" ? "dark" : "light");
     } catch (_e) {}
   }
-  // Apply the initial theme as early as possible.
-  applyTheme(CTX.theme);
-  if (document.addEventListener) {
-    document.addEventListener("DOMContentLoaded", function(){ applyTheme(CTX.theme); });
+  // Only touch the tool's <html data-theme> when it opted into mea-ui. Otherwise
+  // we never modify the tool's design.
+  if (CTX.ui) {
+    applyTheme(CTX.theme);
+    if (document.addEventListener) {
+      document.addEventListener("DOMContentLoaded", function(){ applyTheme(CTX.theme); });
+    }
   }
 
   function sendReady(){
@@ -68,6 +87,10 @@ export function buildBridgeScript(opts: BridgeBootstrapOptions): string {
       sendReady();
       return;
     }
+    if (msg.kind === "stream-chunk" && pending[msg.id]) {
+      try { if (pending[msg.id].onChunk) pending[msg.id].onChunk(msg.chunk); } catch (_e) {}
+      return;
+    }
     if (msg.kind === "response" && pending[msg.id]) {
       var h = pending[msg.id];
       delete pending[msg.id];
@@ -77,7 +100,7 @@ export function buildBridgeScript(opts: BridgeBootstrapOptions): string {
     } else if (msg.kind === "event") {
       // Built-in: keep the design tokens in sync with the panel theme.
       if (msg.name === "theme" && msg.payload && msg.payload.theme) {
-        applyTheme(msg.payload.theme);
+        if (CTX.ui) applyTheme(msg.payload.theme);
         if (window.meaprojects && window.meaprojects.context) window.meaprojects.context.theme = msg.payload.theme;
       }
       var handlers = eventListeners[msg.name] || [];
@@ -91,11 +114,7 @@ export function buildBridgeScript(opts: BridgeBootstrapOptions): string {
     llm: {
       complete: function(args){ return request("llm.complete", args); },
       stream: function(args, onChunk){
-        // MVP: stream emülasyonu — tek seferlik complete; chunk yoksa direkt sonucu döner.
-        return request("llm.complete", args).then(function(res){
-          if (typeof onChunk === "function") onChunk(res.text);
-          return res;
-        });
+        return streamRequest("llm.stream", args, typeof onChunk === "function" ? onChunk : null);
       }
     },
     storage: {
@@ -197,7 +216,8 @@ body{
  * which can still override everything (no !important is used).
  */
 export function injectBridgeIntoHtml(html: string, opts: BridgeBootstrapOptions): string {
-  const head = `${buildDesignTokensStyle()}\n<script data-meaprojects-bridge>${buildBridgeScript(opts)}</script>`;
+  const design = opts.ui ? `${buildDesignTokensStyle()}\n` : "";
+  const head = `${design}<script data-meaprojects-bridge>${buildBridgeScript(opts)}</script>`;
   if (html.includes("<head>")) {
     return html.replace("<head>", `<head>\n${head}\n`);
   }

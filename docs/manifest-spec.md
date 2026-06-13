@@ -9,12 +9,13 @@ Her meaprojects tool'u kökünde **`tool.json`** dosyası içerir. Manifest, too
   "name": "Hello Tool",
   "slug": "hello-tool",
   "version": "0.1.0",
-  "description": "Anthropic API ile basit bir 'merhaba' örneği.",
-  "type": "spa",
+  "description": "OpenRouter üzerinden basit bir 'merhaba' örneği.",
+  "type": "static",
   "entry": "index.html",
   "icon": "icon.png",
+  "ui": "mea",
   "permissions": [
-    "llm:anthropic",
+    "llm:openrouter",
     "storage:local",
     "events:emit"
   ]
@@ -32,6 +33,7 @@ Her meaprojects tool'u kökünde **`tool.json`** dosyası içerir. Manifest, too
 | `type` | evet | enum | `static` \| `spa` \| `backend` |
 | `entry` | evet | string | Tool kökünden göreli; `static`/`spa` için HTML, `backend` için JS giriş dosyası. Path traversal (`..`, mutlak yol) yasaktır. |
 | `icon` | hayır | string | Tool kökünden göreli ikon yolu (PNG/SVG). |
+| `ui` | hayır | `"mea"` | `"mea"` verilirse panel, design token'larını + `data-theme` senkronizasyonunu etkinleştirir. |
 | `permissions` | hayır | string[] | Aşağıdaki tablodan değerler. |
 | `backend` | sadece backend | object | `{ port?: number, env?: string[] }` — v2'de subprocess yönetimi. |
 
@@ -41,9 +43,7 @@ Her izin, bridge tarafında server-side doğrulanır. İzinsiz çağrı 403 dön
 
 | İzin | Açıklama |
 |------|----------|
-| `llm:anthropic` | `window.meaprojects.llm.complete({ provider: "anthropic", ... })` |
-| `llm:openai` | `window.meaprojects.llm.complete({ provider: "openai", ... })` |
-| `llm:google` | v2'de etkinleşecek. |
+| `llm:openrouter` | `window.meaprojects.llm.complete(...)` — OpenRouter üzerinden tüm modeller |
 | `storage:local` | `window.meaprojects.storage.{get,set,delete,list}` |
 | `events:emit` | `window.meaprojects.events.emit(name, payload)` |
 | `events:listen` | `window.meaprojects.events.on(name, handler)` |

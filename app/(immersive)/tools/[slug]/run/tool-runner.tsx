@@ -11,15 +11,33 @@ interface ToolRunnerProps {
   entry: string;
   userName: string;
   userId: string;
+  /** Subdomain modunda header gösterilmez; tool tam ekran çalışır. */
+  standalone?: boolean;
 }
 
-export function ToolRunner({ slug, name, entry }: ToolRunnerProps) {
+export function ToolRunner({ slug, name, entry, standalone = false }: ToolRunnerProps) {
   const iframeRef = React.useRef<HTMLIFrameElement>(null);
   const [fullscreen, setFullscreen] = React.useState(false);
   const [ready, setReady] = React.useState(false);
 
   // Tool dosyalarını panel'in serve eden endpoint'inden yükle.
   const src = `/api/tools/${slug}/file/${entry}`;
+
+  // Standalone (subdomain) modunda tool tam ekran, header yok.
+  if (standalone) {
+    return (
+      <div className="flex h-screen w-screen flex-col">
+        <iframe
+          ref={iframeRef}
+          src={src}
+          title={name}
+          sandbox="allow-scripts allow-forms allow-popups allow-downloads"
+          className="flex-1 w-full border-none"
+        />
+        <BridgeRelay iframeRef={iframeRef} toolSlug={slug} onReady={() => setReady(true)} />
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen w-screen flex-col bg-[var(--bg)]">
@@ -60,7 +78,6 @@ export function ToolRunner({ slug, name, entry }: ToolRunnerProps) {
         ref={iframeRef}
         src={src}
         title={name}
-        // allow-same-origin yok — master prompt §5
         sandbox="allow-scripts allow-forms allow-popups allow-downloads"
         className="flex-1 w-full bg-white"
       />

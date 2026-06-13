@@ -1,13 +1,23 @@
 # mea-ui — making tools look on-brand
 
 Tools run inside a **sandboxed iframe**, so the panel's CSS does not leak into them.
-To keep everything visually consistent, the panel automatically injects a small
-**mea-ui** layer into every tool's HTML at serve time. You don't import anything —
-it's just there.
+To keep everything visually consistent, add `"ui": "mea"` to your `tool.json` to opt into
+the **mea-ui** design layer. Without this flag the panel injects only the bridge
+(`window.meaprojects`) and never touches the tool's markup, styles, or `<html data-theme>`.
 
-## What gets injected
+## Opting in
 
-- **Anta Trial** font (the panel's typeface), served from `/fonts/…`.
+```json
+{
+  "slug": "my-tool",
+  "ui": "mea",
+  ...
+}
+```
+
+## What gets injected (only when `"ui": "mea"`)
+
+- **Anta Trial** font (the panel's typeface), embedded as base64.
 - **Design tokens** as CSS variables, for light and dark, switched by a `data-theme`
   attribute on `<html>` that stays in sync with the panel:
 
@@ -43,27 +53,33 @@ Just reference the variables — no setup:
 Theme is handled for you: when you toggle light/dark in the panel, the tool's
 `data-theme` updates live and every `var(--…)` follows.
 
+## Using your own design (no opt-in)
+
+If you omit `"ui": "mea"`, the panel injects only the bridge script. Your tool
+has full control over its own fonts, colors, and layout. The bridge
+(`window.meaprojects`) is still available — only the visual layer is skipped.
+
+## Design language reference (for custom designs)
+
+If you're building your own design but want to match the panel's aesthetic:
+
+- **Colors**: strict black & white / neutral grays only — no colored accents.
+  Light background `#f0efef`, elevated `#fafafa`, text `#080808`.
+  Dark: background `#0d0d0d`, text `#f0f0f0`.
+- **Typography**: Light headings (`font-weight: 300`), generous letter-spacing on labels,
+  uppercase small caps for metadata.
+- **Shape**: Rounded corners (`12px` default, `8px` small). Generous padding.
+- **Font**: Anta Trial (if you embed it yourself) or `system-ui, -apple-system, "Segoe UI", sans-serif`.
+
 ## The bridge context
 
 ```js
 window.meaprojects.context // { toolSlug, theme: "light"|"dark", locale, user: { id, name } }
-window.meaprojects.llm.complete({ provider, model, messages, maxTokens })
+window.meaprojects.llm.complete({ model, messages, maxTokens })   // tek seferlik
+window.meaprojects.llm.stream({ model, messages }, onChunk)       // token token akış
 window.meaprojects.storage.get/set/delete/list(...)
 window.meaprojects.ui.toast({ title, description, variant })
 ```
 
 You never put API keys in a tool — `llm.complete` proxies through the panel, which holds
 the encrypted keys and enforces the tool's declared permissions.
-
-## Starter template
-
-A ready-to-zip example lives in **`starter-tool/`** (`index.html` + `tool.json`). Zip its
-contents and upload it from **Tools → Upload**. It demonstrates the tokens, theme sync,
-an LLM call, and isolated storage.
-
-When vibe-coding a new tool, tell your assistant:
-
-> Use the mea-ui CSS variables (`var(--bg)`, `var(--text)`, `var(--surface)`,
-> `var(--border)`, `--accent`, `--radius`) and the `.mea-card / .mea-btn / .mea-input`
-> helpers so it matches the meaprojects.com panel, and call the LLM via
-> `window.meaprojects.llm.complete`.
