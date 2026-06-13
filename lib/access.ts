@@ -46,8 +46,9 @@ export async function canAccessTool(
 ): Promise<boolean> {
   if (role === "admin") return true;
   if (tool.access === "public") return true;
-  if (tool.access === "private") return false;
-  // "granted" → needs an explicit ToolAccess row
+  // For any non-public tool, an explicit per-user grant (set by the admin on the
+  // Users page) grants access — regardless of whether the tool is marked
+  // "private" or "granted". Granting a user IS the intent to let them in.
   const grant = await prisma.toolAccess.findUnique({
     where: { userId_toolId: { userId, toolId: tool.id } },
   });
