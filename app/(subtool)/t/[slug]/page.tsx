@@ -9,7 +9,13 @@ export const dynamic = "force-dynamic";
  * Rendered when a request arrives on a tool subdomain (e.g. slug.meaprojects.com).
  * The middleware rewrites such requests to /t/<slug>. Access is enforced here.
  */
-export default async function SubtoolPage({ params }: { params: { slug: string } }) {
+export default async function SubtoolPage({
+  params,
+  searchParams,
+}: {
+  params: { slug: string };
+  searchParams?: Record<string, string | string[]>;
+}) {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
@@ -36,6 +42,11 @@ export default async function SubtoolPage({ params }: { params: { slug: string }
   const manifest = safeJson<{ entry?: string }>(tool.manifest) ?? {};
   const entry = manifest.entry ?? "index.html";
 
+  const launchParams: Record<string, string> = {};
+  for (const [k, v] of Object.entries(searchParams ?? {})) {
+    launchParams[k] = Array.isArray(v) ? v[0] : v;
+  }
+
   return (
     <ToolRunner
       slug={tool.slug}
@@ -44,6 +55,7 @@ export default async function SubtoolPage({ params }: { params: { slug: string }
       userName={user.name ?? "You"}
       userId={user.id}
       standalone
+      params={launchParams}
     />
   );
 }

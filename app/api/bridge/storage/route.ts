@@ -6,6 +6,7 @@ import {
   handleStorageSet,
   handleStorageDelete,
   handleStorageList,
+  handleStorageGetAll,
 } from "@/lib/bridge/handlers";
 
 const BodySchema = z.discriminatedUnion("op", [
@@ -17,6 +18,7 @@ const BodySchema = z.discriminatedUnion("op", [
   }),
   z.object({ op: z.literal("delete"), key: z.string().min(1).max(120) }),
   z.object({ op: z.literal("list"), prefix: z.string().max(120).default("") }),
+  z.object({ op: z.literal("getAll"), prefix: z.string().max(120).default("") }),
 ]);
 
 export async function POST(req: NextRequest) {
@@ -51,6 +53,9 @@ export async function POST(req: NextRequest) {
         break;
       case "list":
         result = await handleStorageList(slug, parsed.data.prefix ?? "");
+        break;
+      case "getAll":
+        result = await handleStorageGetAll(slug, parsed.data.prefix ?? "");
         break;
     }
     return NextResponse.json({ result });

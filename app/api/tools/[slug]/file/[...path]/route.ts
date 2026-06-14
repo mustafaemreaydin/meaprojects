@@ -61,6 +61,12 @@ export async function GET(
     const themeCookie = req.cookies.get("theme")?.value;
     const theme: "light" | "dark" = themeCookie === "dark" ? "dark" : "light";
     const manifestJson = safeJson<{ ui?: string }>(tool.manifest);
+    // Forward URL query params to the tool as launch parameters.
+    // Strip any internal Next.js params that shouldn't leak.
+    const rawParams = req.nextUrl.searchParams;
+    const params: Record<string, string> = {};
+    rawParams.forEach((value, key) => { params[key] = value; });
+
     const opts: BridgeBootstrapOptions = {
       toolSlug: tool.slug,
       parentOrigin,
@@ -71,6 +77,7 @@ export async function GET(
         name: user.name ?? "You",
       },
       ui: manifestJson?.ui === "mea",
+      params,
     };
     const patched = injectBridgeIntoHtml(html, opts);
     return new NextResponse(patched, {

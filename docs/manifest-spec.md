@@ -47,6 +47,7 @@ Her izin, bridge tarafında server-side doğrulanır. İzinsiz çağrı 403 dön
 | `storage:local` | `window.meaprojects.storage.{get,set,delete,list}` |
 | `events:emit` | `window.meaprojects.events.emit(name, payload)` |
 | `events:listen` | `window.meaprojects.events.on(name, handler)` |
+| `jobs:write` | `meaprojects.jobs.{register,cancel,pause,resume,list}` + `meaprojects.notifications.*` |
 
 ## Tipler
 

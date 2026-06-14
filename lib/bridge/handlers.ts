@@ -1,7 +1,5 @@
 import { prisma } from "@/lib/db";
-import { hasPermission, llmPermissionFor } from "@/lib/permissions";
-import { llmRateLimitFor } from "@/lib/rate-limit";
-import { llmComplete, type LlmCompleteRequest } from "@/lib/llm";
+import { hasPermission } from "@/lib/permissions";
 
 export async function resolveToolBySlug(slug: string) {
   const tool = await prisma.tool.findUnique({ where: { slug } });
@@ -20,35 +18,6 @@ function safeArray(s: string): string[] {
   } catch {
     return [];
   }
-}
-
-export async function handleLlmComplete(slug: string, req: LlmCompleteRequest) {
-  const { permissions } = await resolveToolBySlug(slug);
-  const requiredPerm = llmPermissionFor(req.provider);
-  if (!hasPermission(permissions, requiredPerm)) {
-    throw new Error(`Bu tool '${requiredPerm}' iznine sahip değil.`);
-  }
-
-  const rl = llmRateLimitFor(slug);
-  if (!rl.ok) {
-    const seconds = Math.ceil(rl.retryAfterMs / 1000);
-    throw new Error(`Çok hızlı çağrı. ${seconds} sn sonra dene.`);
-  }
-
-  const res = await llmComplete(req);
-
-  await prisma.llmCall.create({
-    data: {
-      toolSlug: slug,
-      provider: res.provider,
-      model: res.model,
-      inputTokens: res.inputTokens,
-      outputTokens: res.outputTokens,
-      costUsd: res.costUsd ?? null,
-    },
-  });
-
-  return res;
 }
 
 export async function handleStorageGet(slug: string, key: string) {
@@ -102,4 +71,24 @@ export async function handleStorageList(slug: string, prefix: string) {
     orderBy: { key: "asc" },
   });
   return rows.map((r) => r.key);
+}
+
+export async function handleStorageGetAll(slug: string, prefix: string) {
+  const { tool, permissions } = await resolveToolBySlug(slug);
+  if (!hasPermission(permissions, "storage:local")) {
+    throw new Error("Bu tool 'storage:local' iznine sahip değil.");
+  }
+  const rows = await prisma.toolStorage.findMany({
+    where: { toolId: tool.id, key: { startsWith: prefix } },
+    orderBy: { key: "asc" },
+  });
+  return Object.fromEntries(
+    rows.map((r) => {
+      try {
+        return [r.key, JSON.parse(r.value)];
+      } catch {
+        return [r.key, null];
+      }
+    })
+  );
 }

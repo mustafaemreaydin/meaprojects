@@ -4,7 +4,7 @@ const nextConfig = {
   // Don't fail the production build on lint issues (type-checking still runs).
   eslint: { ignoreDuringBuilds: true },
   experimental: {
-    serverComponentsExternalPackages: ["@prisma/client", "bcryptjs", "adm-zip", "croner"],
+    serverComponentsExternalPackages: ["@prisma/client", "bcryptjs", "adm-zip", "croner", "ioredis"],
     instrumentationHook: true,
   },
   async headers() {

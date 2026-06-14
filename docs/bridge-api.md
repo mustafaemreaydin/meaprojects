@@ -61,6 +61,7 @@ await window.meaprojects.storage.set("draft", { title: "...", body: "..." });
 const draft = await window.meaprojects.storage.get("draft");  // → value | null
 await window.meaprojects.storage.delete("draft");
 const keys = await window.meaprojects.storage.list("prefix"); // → string[]
+const all  = await window.meaprojects.storage.getAll("prefix"); // → { [key]: value }
 ```
 
 İzin: `storage:local`. Veriler `ToolStorage` tablosunda `(toolId, key)` benzersizliğiyle JSON olarak tutulur.
@@ -73,7 +74,9 @@ window.meaprojects.events.emit("ready", { version: "0.1.0" });
 window.meaprojects.events.off("user-action", handler);
 ```
 
-İzinler: `events:listen`, `events:emit`. Olaylar yalnızca **panel ↔ tool** arası geçer.
+İzinler: `events:listen`, `events:emit`.
+
+Olaylar **tüm açık tool'lara** yayılır — aynı tool'a (self-event) ve diğer tool'lara (cross-tool). Panel bir window-level CustomEvent bus üzerinden yönlendirir. Tool A `emit("price-update", data)` yaptığında aynı anda açık olan Tool B de `on("price-update", handler)` ile bunu alır.
 
 ### `meaprojects.ui`
 
@@ -90,9 +93,21 @@ window.meaprojects.context.toolSlug;   // "hello-tool"
 window.meaprojects.context.user;       // { id, name }
 window.meaprojects.context.theme;      // "light" | "dark"
 window.meaprojects.context.locale;     // "tr"
+window.meaprojects.context.params;     // { [key]: string } — URL query params
 ```
 
 Sync getter'lar; bridge bootstrap sırasında parent tarafından doldurulur. Theme değiştiğinde panel bir `theme` eventi yollar — `context.theme` otomatik güncellenir.
+
+**Launch parameters:** tool'u açarken URL'e query param ekle, tool içinde `context.params` ile oku:
+
+```
+/tools/my-tool/run?topic=bitcoin&lang=tr
+slug.meaprojects.com?topic=bitcoin&lang=tr
+```
+
+```js
+const topic = window.meaprojects.context.params.topic; // "bitcoin"
+```
 
 ## Bridge ne zaman hazır?
 

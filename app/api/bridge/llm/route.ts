@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
         { status: 403 }
       );
     }
-    const rl = llmRateLimitFor(slug);
+    const rl = await llmRateLimitFor(slug);
     if (!rl.ok) {
       const seconds = Math.ceil(rl.retryAfterMs / 1000);
       return NextResponse.json(

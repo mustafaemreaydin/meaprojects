@@ -1,8 +1,17 @@
 services:
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --save "" --appendonly no
+    expose:
+      - "6379"
+
   app:
     build: .
     restart: unless-stopped
     env_file: .env
+    depends_on:
+      - redis
     volumes:
       # Prisma resolves ./data relative to the schema dir → /app/prisma/data
       - ./data:/app/prisma/data   # SQLite DB (meaprojects.db) — persisted

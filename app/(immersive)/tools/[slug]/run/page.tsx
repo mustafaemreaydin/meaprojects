@@ -5,7 +5,13 @@ import { ToolRunner } from "./tool-runner";
 
 export const dynamic = "force-dynamic";
 
-export default async function RunPage({ params }: { params: { slug: string } }) {
+export default async function RunPage({
+  params,
+  searchParams,
+}: {
+  params: { slug: string };
+  searchParams?: Record<string, string | string[]>;
+}) {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
@@ -37,6 +43,12 @@ export default async function RunPage({ params }: { params: { slug: string } }) 
   const manifest = safeJson<{ entry?: string }>(tool.manifest) ?? {};
   const entry = manifest.entry ?? "index.html";
 
+  // Flatten searchParams (take first value per key) and pass to the runner.
+  const launchParams: Record<string, string> = {};
+  for (const [k, v] of Object.entries(searchParams ?? {})) {
+    launchParams[k] = Array.isArray(v) ? v[0] : v;
+  }
+
   return (
     <ToolRunner
       slug={tool.slug}
@@ -44,6 +56,7 @@ export default async function RunPage({ params }: { params: { slug: string } }) 
       entry={entry}
       userName={user.name ?? "You"}
       userId={user.id}
+      params={launchParams}
     />
   );
 }

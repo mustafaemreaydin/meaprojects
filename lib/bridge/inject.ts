@@ -18,6 +18,9 @@ export interface BridgeBootstrapOptions {
    *  When false/omitted the panel injects ONLY the bridge and never touches the
    *  tool's markup, styles, or <html data-theme> — the tool's design is left alone. */
   ui?: boolean;
+  /** URL query parameters forwarded from the tool launch URL.
+   *  Accessible as `meaprojects.context.params` inside the tool. */
+  params?: Record<string, string>;
 }
 
 export function buildBridgeScript(opts: BridgeBootstrapOptions): string {
@@ -121,7 +124,8 @@ export function buildBridgeScript(opts: BridgeBootstrapOptions): string {
       get:    function(key){ return request("storage.get", { key: key }); },
       set:    function(key, value){ return request("storage.set", { key: key, value: value }); },
       delete: function(key){ return request("storage.delete", { key: key }); },
-      list:   function(prefix){ return request("storage.list", { prefix: prefix || "" }); }
+      list:   function(prefix){ return request("storage.list", { prefix: prefix || "" }); },
+      getAll: function(prefix){ return request("storage.getAll", { prefix: prefix || "" }); }
     },
     events: {
       emit: function(name, payload){
@@ -140,7 +144,8 @@ export function buildBridgeScript(opts: BridgeBootstrapOptions): string {
       toolSlug: CTX.toolSlug,
       theme: CTX.theme,
       locale: CTX.locale,
-      user: CTX.user
+      user: CTX.user,
+      params: CTX.params || {}
     },
     ui: {
       toast: function(args){

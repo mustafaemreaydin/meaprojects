@@ -103,7 +103,9 @@ Available globally inside the tool. All methods are async (return Promises) unle
 ```js
 // Context (read-only, sync)
 window.meaprojects.context
-// → { toolSlug, theme: "light" | "dark", locale, user: { id, name } }
+// → { toolSlug, theme: "light" | "dark", locale, user: { id, name }, params: Record<string,string> }
+// params = URL query params from the launch URL
+// e.g. /tools/my-tool/run?topic=bitcoin  →  context.params.topic === "bitcoin"
 
 // LLM — routed through OpenRouter (one wallet → every model). The panel injects
 // the API key & enforces your declared permission.
@@ -135,16 +137,29 @@ await window.meaprojects.storage.set("key", anyJsonValue);
 const v = await window.meaprojects.storage.get("key");   // → value | null
 await window.meaprojects.storage.delete("key");
 const keys = await window.meaprojects.storage.list("prefix"); // → string[]
+const all  = await window.meaprojects.storage.getAll("prefix"); // → { [key]: value }
 
-// Events (optional, between tools / panel)
-window.meaprojects.events.emit("name", payload);
-window.meaprojects.events.on("name", (payload) => { /* ... */ });
-window.meaprojects.events.off("name", handler);
+// Events — broadcast to ALL open tools (including self)
+// Requires: events:emit to send, events:listen to receive
+window.meaprojects.events.emit("price-update", { btc: 65000 });
+window.meaprojects.events.on("price-update", (payload) => { console.log(payload.btc); });
+window.meaprojects.events.off("price-update", handler);
+// Tool A's emit reaches Tool B if both are open in the panel simultaneously.
 
-// UI helpers (use the panel's toast/confirm so it matches the app)
+// UI helpers — rendered as native panel components (not browser dialogs)
 window.meaprojects.ui.toast({ title: "Done", description: "…", variant: "success" });
 // variant: "success" | "warning" | "danger" | undefined
 const ok = await window.meaprojects.ui.confirm({ title: "Sure?", message: "…" }); // → boolean
+// confirm() shows a panel modal — NOT window.confirm. Works inside sandboxed iframes.
+```
+
+**Launch parameters:** append query params to the tool URL and read them via `context.params`:
+```
+/tools/my-tool/run?mode=advanced&lang=tr
+slug.meaprojects.com?mode=advanced&lang=tr
+```
+```js
+const mode = window.meaprojects.context.params.mode; // "advanced"
 ```
 
 **Model notes:** use a **current OpenRouter model slug** — `<vendor>/<model>`. Model IDs
@@ -196,7 +211,93 @@ You may fully override these with your own CSS — nothing uses `!important`.
 
 ---
 
-## 6. Permissions (declare in `tool.json`)
+## 6. Background Jobs — `meaprojects.jobs`
+
+Tool'lar, panel kapalıyken bile sunucu tarafında çalışan işler kaydedebilir.
+İzin: **`jobs:write`** (manifest'te beyan edilmeli).
+
+### İş tipleri
+
+| Tip | Ne zaman çalışır |
+|-----|-----------------|
+| `"cron"` | Standart cron ifadesine göre periyodik |
+| `"once"` | ISO 8601 tarih/saatinde tek seferlik |
+| `"webhook"` | `POST /api/tools/{slug}/webhook/{name}` ile tetiklenir |
+
+### Kayıt
+
+```js
+// Periyodik — her 10 dakikada bir
+await window.meaprojects.jobs.register("fiyat-kontrol", {
+  type: "cron",
+  schedule: "*/10 * * * *",
+  code: `
+    const res = await meaprojects.llm.complete({
+      model: "google/gemini-2.5-flash",
+      messages: [{ role: "user", content: "Bitcoin fiyatı ne?" }],
+    });
+    await meaprojects.storage.set("son-fiyat", res.text);
+    await meaprojects.notify("Fiyat güncellendi", { text: res.text });
+  `,
+});
+
+// Tek seferlik — 1 saat sonra
+await window.meaprojects.jobs.register("hatirlatici", {
+  type: "once",
+  schedule: new Date(Date.now() + 3_600_000).toISOString(),
+  code: `await meaprojects.notify("1 saat geçti!");`,
+});
+
+// Webhook — dışarıdan tetiklenir
+await window.meaprojects.jobs.register("siparis-geldi", {
+  type: "webhook",
+  code: `
+    const payload = await meaprojects.storage.get("__webhook__siparis-geldi__payload");
+    await meaprojects.notify("Yeni sipariş!", JSON.parse(payload));
+  `,
+});
+// Tetikle: POST (veya GET) /api/tools/{slug}/webhook/siparis-geldi
+```
+
+### Job code context
+
+`code` string'i **Node.js sunucusunda** çalışır (sandbox, 60 sn zaman aşımı). Erişilebilir:
+
+- `meaprojects.llm.complete(...)` — LLM çağrısı
+- `meaprojects.storage.*` — aynı tool'un storage'ı
+- `meaprojects.notify(message, data?)` — tool UI'ına bildirim gönder
+- `fetch(...)` — harici HTTP istekleri
+- `console.log / console.error` — iş loguna yazar
+
+### Yönetim
+
+```js
+const jobs = await window.meaprojects.jobs.list();
+await window.meaprojects.jobs.pause("fiyat-kontrol");
+await window.meaprojects.jobs.resume("fiyat-kontrol");
+await window.meaprojects.jobs.cancel("fiyat-kontrol");
+```
+
+### Bildirimleri almak (UI tarafında)
+
+```js
+// Tool açıkken job bildirimlerini dinle (her 3 sn polling)
+const stop = window.meaprojects.notifications.connect((notif) => {
+  console.log(notif.message, notif.data);
+}, 3000);
+
+stop(); // temizlik
+
+// Anlık sorgulama
+const msgs = await window.meaprojects.notifications.poll();
+// → [{ message, data, createdAt }, ...]
+```
+
+Panel → **Jobs** menüsünden (admin) tüm işleri görüntüleyip durdurabilirsin.
+
+---
+
+## 7. Permissions (declare in `tool.json`)
 
 | Permission | Needed for |
 |---|---|
@@ -215,7 +316,7 @@ permission throws.
 
 ---
 
-## 7. Complete minimal example
+## 8. Complete minimal example
 
 **`tool.json`**
 ```json
@@ -293,7 +394,7 @@ permission throws.
 
 ---
 
-## 8. Packaging & install
+## 9. Packaging & install
 
 1. Put `tool.json` + `index.html` (+ assets) **at the root** of a `.zip`.
    - Correct: `myzip.zip → tool.json, index.html`
@@ -304,7 +405,7 @@ permission throws.
 
 ---
 
-## 9. Checklist for the AI
+## 10. Checklist for the AI
 
 - [ ] `tool.json` at zip root, valid slug (kebab, unique), semver version, `type` static/spa.
 - [ ] Only declared permissions are used; every bridge call's permission is declared.
@@ -319,6 +420,8 @@ permission throws.
 - [ ] **No `type="module"`** — classic `<script>` + UMD only.
 - [ ] Error banner (`#fatal` + `window.onerror`) is present at top of `<body>`.
 - [ ] Bridge calls are inside event handlers or `DOMContentLoaded`, not bare top-level code.
+- [ ] If background jobs are used: `jobs:write` is declared; `code` string runs only Node-available APIs (no DOM); `meaprojects.notify()` used for results; UI calls `notifications.connect()` or `.poll()` to receive them.
+- [ ] If events are used: `events:emit` / `events:listen` declared as needed; handlers registered inside `DOMContentLoaded` or event listeners (not top-level); `off()` called on cleanup.
 - [ ] Deliver as a zip with files at the root.
 
 ---

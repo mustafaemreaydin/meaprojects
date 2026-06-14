@@ -13,15 +13,21 @@ interface ToolRunnerProps {
   userId: string;
   /** Subdomain modunda header gösterilmez; tool tam ekran çalışır. */
   standalone?: boolean;
+  /** Launch parameters — appended to the tool's file URL as query string so
+   *  the file route can forward them via the bridge to `meaprojects.context.params`. */
+  params?: Record<string, string>;
 }
 
-export function ToolRunner({ slug, name, entry, standalone = false }: ToolRunnerProps) {
+export function ToolRunner({ slug, name, entry, standalone = false, params }: ToolRunnerProps) {
   const iframeRef = React.useRef<HTMLIFrameElement>(null);
   const [fullscreen, setFullscreen] = React.useState(false);
   const [ready, setReady] = React.useState(false);
 
   // Tool dosyalarını panel'in serve eden endpoint'inden yükle.
-  const src = `/api/tools/${slug}/file/${entry}`;
+  const qs = params && Object.keys(params).length > 0
+    ? "?" + new URLSearchParams(params).toString()
+    : "";
+  const src = `/api/tools/${slug}/file/${entry}${qs}`;
 
   // Standalone (subdomain) modunda tool tam ekran, header yok.
   if (standalone) {
